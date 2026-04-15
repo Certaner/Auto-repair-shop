@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Редактировать запчасть{% endblock %}
+{% block header %}
+    <i class="bi bi-pencil-fill text-warning me-2"></i>Редактирование запчасти: {{ part.part_name }}
+{% endblock %}
+
+{% block actions %}
+<a href="{{ url_for('parts_list') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Назад к складу
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0"><i class="bi bi-box-seam"></i> Редактирование информации о запчасти</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('edit_part', part_id=part.part_id) }}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Наименование *</label>
+                            <input type="text" class="form-control" name="part_name"
+                                   value="{{ part.part_name }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Артикул</label>
+                            <input type="text" class="form-control" name="part_number"
+                                   value="{{ part.part_number or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Производитель</label>
+                            <input type="text" class="form-control" name="manufacturer"
+                                   value="{{ part.manufacturer or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Цена за единицу *</label>
+                            <input type="number" class="form-control" name="unit_price"
+                                   step="0.01" value="{{ part.unit_price }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Текущий остаток</label>
+                            <input type="number" class="form-control"
+                                   value="{{ part.quantity_in_stock }}" disabled>
+                            <small class="form-text text-muted">
+                                Для изменения остатка используйте кнопки "Приход" или "Расход"
+                            </small>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Мин. остаток *</label>
+                            <input type="number" class="form-control" name="min_quantity"
+                                   value="{{ part.min_quantity }}" min="1" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Место хранения</label>
+                            <input type="text" class="form-control" name="location"
+                                   value="{{ part.location or '' }}">
+                        </div>
+                        <div class="col-12 mt-4">
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{{ url_for('parts_list') }}" class="btn btn-secondary me-md-2">
+                                    <i class="bi bi-x-circle"></i> Отмена
+                                </a>
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="bi bi-check-lg"></i> Сохранить изменения
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

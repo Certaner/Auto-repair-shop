@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}Склад запчастей{% endblock %}
+{% block header %}Склад запчастей{% endblock %}
+
+{% block actions %}
+<button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addPartModal">
+    <i class="bi bi-box-seam"></i> Добавить запчасть
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <!-- Фильтры и поиск -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Поиск по названию или артикулу...">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="stockFilter">
+                    <option value="">Все остатки</option>
+                    <option value="low">Низкий остаток (< мин.)</option>
+                    <option value="out">Отсутствуют</option>
+                    <option value="normal">В наличии</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Таблица запчастей -->
+        <div class="table-responsive">
+            <table class="table table-hover" id="partsTable">
+                <thead>
+                    <tr>
+                        <th>Артикул</th>
+                        <th>Наименование</th>
+                        <th>Производитель</th>
+                        <th>Цена</th>
+                        <th>Остаток</th>
+                        <th>Мин. остаток</th>
+                        <th>Место хранения</th>
+                        <th>Статус</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for part in parts %}
+                    <tr data-stock="{{ part.quantity_in_stock }}"
+                        data-min="{{ part.min_quantity }}"
+                        data-name="{{ part.part_name|lower }}"
+                        data-number="{{ part.part_number|lower }}">
+                        <td>
+                            {% if part.part_number %}
+                            <code>{{ part.part_number }}</code>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <strong>{{ part.part_name }}</strong>
+                        </td>
+                        <td>{{ part.manufacturer or '—' }}</td>
+                        <td>
+                            <strong>{{ "%.2f"|format(part.unit_price) }} ₽</strong>
+                        </td>
+                        <td>
+                            <span class="badge
+                                {% if part.quantity_in_stock == 0 %}bg-danger
+                                {% elif part.quantity_in_stock < part.min_quantity %}bg-warning text-dark
+                                {% else %}bg-success{% endif %}">
+                                {{ part.quantity_in_stock }} шт.
+                            </span>
+                        </td>
+                        <td>{{ part.min_quantity }} шт.</td>
+                        <td>
+                            {% if part.location %}
+                            <small>{{ part.location }}</small>
+                            {% else %}
+                            <span class="text-muted">не указано</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if part.quantity_in_stock == 0 %}
+                            <span class="badge bg-danger">Нет в наличии</span>
+                            {% elif part.quantity_in_stock < part.min_quantity %}
+                            <span class="badge bg-warning text-dark">Мало</span>
+                            {% else %}
+                            <span class="badge bg-success">В наличии</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('edit_part', part_id=part.part_id) }}" class="btn btn-outline-primary" title="Редактировать">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button class="btn btn-outline-success"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#addStockModal"
+                                        data-part-id="{{ part.part_id }}"
+                                        data-part-name="{{ part.part_name }}"
+                                        title="Приход">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
+                                <button class="btn btn-outline-warning"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#useStockModal"
+                                        data-part-id="{{ part.part_id }}"
+                                        data-part-name="{{ part.part_name }}"
+                                        data-stock="{{ part.quantity_in_stock }}"
+                                        title="Расход">
+                                    <i class="bi bi-dash-circle"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">
+                            Запчасти не найдены. <a href="#" data-bs-toggle="modal" data-bs-target="#addPartModal">Добавить первую запчасть</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="table-secondary">
+                        <td colspan="4" class="text-end"><strong>Общая стоимость склада:</strong></td>
+                        <td colspan="5">
+                            <h5 class="mb-0 text-primary">
+                                {% set total_value = namespace(value=0) %}
+                                {% for part in parts %}
+                                    {% set total_value.value = total_value.value + (part.unit_price * part.quantity_in_stock) %}
+                                {% endfor %}
+                                {{ "%.2f"|format(total_value.value) }} ₽
+                            </h5>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- Статистика -->
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">Всего позиций</h6>
+                        <h2 class="mb-0">{{ parts|length }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-dark">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">С низким остатком</h6>
+                        <h2 class="mb-0">{{ parts|selectattr('quantity_in_stock', 'lt', 5)|list|length }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">Нет в наличии</h6>
+                        <h2 class="mb-0">{{ parts|selectattr('quantity_in_stock', 'equalto', 0)|list|length }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">Общий остаток</h6>
+                        <h2 class="mb-0">{{ parts|sum(attribute='quantity_in_stock') }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно добавления запчасти -->
+<div class="modal fade" id="addPartModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="bi bi-box-seam"></i> Новая запчасть</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="/warehouse/parts/add">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Наименование *</label>
+                            <input type="text" class="form-control" name="part_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Артикул</label>
+                            <input type="text" class="form-control" name="part_number">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Производитель</label>
+                            <input type="text" class="form-control" name="manufacturer">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Цена за единицу *</label>
+                            <input type="number" class="form-control" name="unit_price" step="0.01" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Начальный остаток</label>
+                            <input type="number" class="form-control" name="quantity_in_stock" value="0" min="0">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Мин. остаток</label>
+                            <input type="number" class="form-control" name="min_quantity" value="5" min="1">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Место хранения</label>
+                            <input type="text" class="form-control" name="location" placeholder="Секция А, полка 1">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-success">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для прихода запчастей -->
+<div class="modal fade" id="addStockModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="addStockModalTitle">Приход запчасти</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="" id="addStockForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Количество для прихода *</label>
+                        <input type="number" class="form-control" name="quantity"
+                               min="1" value="1" required>
+                        <div class="form-text">Укажите количество добавляемых запчастей</div>
+                    </div>
+                    <input type="hidden" name="part_id" id="addStockPartId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-success">Добавить на склад</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для расхода запчастей -->
+<div class="modal fade" id="useStockModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title" id="useStockModalTitle">Расход запчасти</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="" id="useStockForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Количество для расхода *</label>
+                        <input type="number" class="form-control" name="quantity"
+                               min="1" value="1" required>
+                        <div class="form-text">Укажите количество списываемых запчастей</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Причина расхода</label>
+                        <input type="text" class="form-control" name="reason"
+                               placeholder="Например: повреждение, утеря, тестирование...">
+                    </div>
+                    <input type="hidden" name="part_id" id="useStockPartId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-warning">Списать со склада</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Обработка модального окна прихода
+    $('#addStockModal').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget); // Кнопка, которая открыла модальное окно
+        var partId = button.data('part-id');
+        var partName = button.data('part-name');
+
+        // Устанавливаем заголовок
+        $(this).find('#addStockModalTitle').text('Приход запчасти: ' + partName);
+
+        // Устанавливаем action формы
+        var actionUrl = "{{ url_for('add_stock', part_id=0) }}".replace('0', partId);
+        $(this).find('#addStockForm').attr('action', actionUrl);
+    });
+
+    // Обработка модального окна расхода
+    $('#useStockModal').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        var partId = button.data('part-id');
+        var partName = button.data('part-name');
+        var currentStock = button.data('stock');
+
+        // Устанавливаем заголовок
+        $(this).find('#useStockModalTitle').text('Расход запчасти: ' + partName);
+
+        // Устанавливаем максимальное значение для расхода
+        $(this).find('input[name="quantity"]').attr('max', currentStock);
+
+        // Устанавливаем action формы
+        var actionUrl = "{{ url_for('use_stock', part_id=0) }}".replace('0', partId);
+        $(this).find('#useStockForm').attr('action', actionUrl);
+    });
+
+    // Подтверждение при расходе
+    $('#useStockForm').submit(function() {
+        var quantity = parseInt($(this).find('input[name="quantity"]').val());
+        var maxQuantity = parseInt($(this).find('input[name="quantity"]').attr('max'));
+
+        if (quantity > maxQuantity) {
+            alert('Нельзя списать больше запчастей, чем есть на складе!');
+            return false;
+        }
+
+        return confirm(`Вы уверены, что хотите списать ${quantity} шт.?`);
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Клиенты{% endblock %}
+{% block header %}Список клиентов{% endblock %}
+
+{% block actions %}
+<a href="{{ url_for('add_client') }}" class="btn btn-success">
+    <i class="bi bi-person-plus"></i> Добавить клиента
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>ФИО</th>
+                        <th>Телефон</th>
+                        <th>Email</th>
+                        <th>Автомобили</th>
+                        <th>Дата регистрации</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in clients %}
+                    <tr>
+                        <td>{{ client.client_id }}</td>
+                        <td>
+                            <strong>{{ client.last_name }} {{ client.first_name }}</strong>
+                        </td>
+                        <td>{{ client.phone }}</td>
+                        <td>{{ client.email or '-' }}</td>
+                        <td>
+                            <span class="badge bg-info">{{ client.cars|length }}</span>
+                        </td>
+                        <td>{{ client.created_date.strftime('%d.%m.%Y') }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('client_details', client_id=client.client_id) }}"
+                                   class="btn btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('edit_client', client_id=client.client_id) }}"
+                                   class="btn btn-outline-warning" title="Редактировать">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            Клиенты не найдены. <a href="{{ url_for('add_client') }}">Добавить первого клиента</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

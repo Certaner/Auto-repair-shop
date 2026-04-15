@@ -1,0 +1,527 @@
+{% extends "base.html" %}
+
+{% block title %}Дашборд{% endblock %}
+{% block header %}Панель управления{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Приветствие пользователя -->
+    <div class="col-12 mb-4">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h4 class="card-title mb-3">
+                    <i class="bi bi-speedometer2 text-primary"></i>
+                    Добро пожаловать, {{ current_user.full_name }}!
+                </h4>
+                <p class="card-text mb-0">
+                    <span class="badge bg-secondary">{{ current_user.get_role_name() }}</span>
+                    {% if current_user.role == 'mechanic' %}
+                        Вы вошли как механик. Здесь вы можете видеть свои назначенные работы.
+                    {% elif current_user.role == 'master' %}
+                        Вы вошли как мастер-приёмщик. У вас есть доступ к клиентам, автомобилям и заказам.
+                    {% elif current_user.role == 'admin' %}
+                        Вы вошли как администратор системы. У вас полный доступ ко всем функциям.
+                    {% elif current_user.role == 'manager' %}
+                        Вы вошли как руководитель. У вас доступ к отчётам и управлению.
+                    {% else %}
+                        Вы вошли в автоматизированную систему управления автосервисом.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Статистика для админа, менеджера и мастера -->
+{% if current_user.role == 'admin' or current_user.role == 'manager' %}
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Клиентов</h6>
+                        <h2 class="mb-0">{{ stats.total_clients or 0 }}</h2>
+                    </div>
+                    <i class="bi bi-people display-6"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Всего заказов</h6>
+                        <h2 class="mb-0">{{ stats.total_orders or 0 }}</h2>
+                    </div>
+                    <i class="bi bi-clipboard-data display-6"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Активные заказы</h6>
+                        <h2 class="mb-0">{{ stats.active_orders or 0 }}</h2>
+                    </div>
+                    <i class="bi bi-gear display-6"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Выручка (месяц)</h6>
+                        <h2 class="mb-0">{{ "%.2f"|format(stats.month_revenue|default(0)) }} ₽</h2>
+                    </div>
+                    <i class="bi bi-currency-ruble display-6"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Статистика для мастера-приёмщика -->
+{% if current_user.role == 'master' %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Клиентов</h6>
+                        <h2 class="mb-0">{{ stats.total_clients or 0 }}</h2>
+                    </div>
+                    <i class="bi bi-people display-6"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Всего заказов</h6>
+                        <h2 class="mb-0">{{ stats.total_orders or 0 }}</h2>
+                    </div>
+                    <i class="bi bi-clipboard-data display-6"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Активные заказы</h6>
+                        <h2 class="mb-0">{{ stats.active_orders or 0 }}</h2>
+                    </div>
+                    <i class="bi bi-gear display-6"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Статистика для механика -->
+{% if current_user.role == 'mechanic' %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Назначенных работ</h6>
+                        <h2 class="mb-0">{{ stats.assigned_works or 0 }}</h2>
+                    </div>
+                    <i class="bi bi-list-task display-6"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Завершено работ</h6>
+                        <h2 class="mb-0">{{ stats.completed_works or 0 }}</h2>
+                    </div>
+                    <i class="bi bi-check-circle display-6"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Всего работ</h6>
+                        <h2 class="mb-0">{{ stats.total_works or 0 }}</h2>
+                    </div>
+                    <i class="bi bi-tools display-6"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Быстрые действия (скрыть для механиков) -->
+{% if current_user.role != 'mechanic' %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Быстрые действия</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <!-- Для админа -->
+                    {% if current_user.role == 'admin' %}
+                    <div class="col-md-2">
+                        <a href="{{ url_for('add_client') }}" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                            <i class="bi bi-person-plus fs-2 mb-2"></i>
+                            <span>Добавить клиента</span>
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{{ url_for('add_car') }}" class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                            <i class="bi bi-car-front fs-2 mb-2"></i>
+                            <span>Добавить автомобиль</span>
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{{ url_for('add_employee') }}" class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                            <i class="bi bi-person-plus fs-2 mb-2"></i>
+                            <span>Добавить сотрудника</span>
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{{ url_for('add_order') }}" class="btn btn-outline-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                            <i class="bi bi-clipboard-plus fs-2 mb-2"></i>
+                            <span>Новый заказ</span>
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-outline-secondary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3"
+                                data-bs-toggle="modal" data-bs-target="#addPartModal">
+                            <i class="bi bi-box-seam fs-2 mb-2"></i>
+                            <span>Добавить запчасть</span>
+                        </button>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{{ url_for('orders_report') }}" class="btn btn-outline-dark w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                            <i class="bi bi-graph-up fs-2 mb-2"></i>
+                            <span>Финансовый отчёт</span>
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    <!-- Для мастера -->
+                    {% if current_user.role == 'master' %}
+                    <div class="col-md-4">
+                        <a href="{{ url_for('add_client') }}" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                            <i class="bi bi-person-plus fs-2 mb-2"></i>
+                            <span>Добавить клиента</span>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{{ url_for('add_car') }}" class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                            <i class="bi bi-car-front fs-2 mb-2"></i>
+                            <span>Добавить автомобиль</span>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{{ url_for('add_order') }}" class="btn btn-outline-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                            <i class="bi bi-clipboard-plus fs-2 mb-2"></i>
+                            <span>Новый заказ</span>
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    <!-- Для менеджера -->
+                    {% if current_user.role == 'manager' %}
+                    <div class="col-md-4">
+                        <a href="{{ url_for('add_employee') }}" class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                            <i class="bi bi-person-plus fs-2 mb-2"></i>
+                            <span>Добавить сотрудника</span>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-outline-secondary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3"
+                                data-bs-toggle="modal" data-bs-target="#addPartModal">
+                            <i class="bi bi-box-seam fs-2 mb-2"></i>
+                            <span>Добавить запчасть</span>
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{{ url_for('orders_report') }}" class="btn btn-outline-dark w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                            <i class="bi bi-graph-up fs-2 mb-2"></i>
+                            <span>Финансовый отчёт</span>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+
+
+<!-- Мои последние работы (для механиков) -->
+{% if current_user.role == 'mechanic' and my_assigned_works %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-tools"></i> Мои последние работы</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Работа</th>
+                                <th>Заказ</th>
+                                <th>Статус</th>
+                                <th>Дата выполнения</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for work in my_assigned_works %}
+                            <tr>
+                                <td>
+                                    <strong>{{ work.work_info.work_name }}</strong><br>
+                                    <small class="text-muted">{{ work.work_info.description|truncate(30) }}</small>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('order_details', order_id=work.order_id) }}">
+                                        #{{ work.order_id }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge
+                                        {% if work.work_status == 'завершена' %}bg-success
+                                        {% elif work.work_status == 'в работе' %}bg-warning text-dark
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ work.get_status_name() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if work.work_status == 'завершена' and work.end_time %}
+                                        {{ work.end_time.strftime('%d.%m.%Y %H:%M') }}
+                                    {% elif work.start_time %}
+                                        {{ work.start_time.strftime('%d.%m.%Y %H:%M') }}
+                                    {% else %}
+                                        <span class="text-muted">не начата</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('order_details', order_id=work.order_id) }}"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    {% if work.work_status != 'завершена' %}
+                                    <form method="POST" action="{{ url_for('complete_work', order_id=work.order_id, order_comp_id=work.order_comp_id) }}"
+                                          class="d-inline" onsubmit="return confirm('Отметить работу как выполненную?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-success">
+                                            <i class="bi bi-check"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Последние заказы (для всех, у кого есть recent_orders) -->
+{% if recent_orders %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i>
+                    {% if current_user.role == 'mechanic' %}
+                        Заказы с моими работами
+                    {% else %}
+                        Последние заказы
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>№ заказа</th>
+                                <th>Клиент</th>
+                                <th>Автомобиль</th>
+                                <th>Дата приёмки</th>
+                                <th>Статус</th>
+                                <th>Сумма</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                            <tr>
+                                <td><strong>#{{ order.order_id }}</strong></td>
+                                <td>{{ order.car.owner.last_name }} {{ order.car.owner.first_name|first }}.</td>
+                                <td>{{ order.car.brand }} {{ order.car.model }}</td>
+                                <td>{{ order.reception_date.strftime('%d.%m.%Y') }}</td>
+                                <td>
+                                    <span class="badge
+                                        {% if order.status == 'завершен' %}bg-success
+                                        {% elif order.status == 'в работе' %}bg-warning text-dark
+                                        {% elif order.status == 'принят' %}bg-secondary
+                                        {% else %}bg-danger{% endif %}">
+                                        {{ order.get_status_name() }}
+                                    </span>
+                                </td>
+                                <td>{{ "%.2f"|format(order.total_cost) }} ₽</td>
+                                <td>
+                                    <a href="{{ url_for('order_details', order_id=order.order_id) }}"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Информационные блоки -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <!-- Системная информация -->
+        <div class="card">
+            <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="bi bi-info-circle"></i> Информация о системе</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success"></i>
+                        <strong>Текущая дата:</strong> {{ date.today().strftime('%d.%m.%Y') }}
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success"></i>
+                        <strong>Пользователь:</strong> {{ current_user.username }}
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success"></i>
+                        <strong>Роль:</strong> {{ current_user.get_role_name() }}
+                    </li>
+                    {% if current_user.employee %}
+                    <li class="mb-0">
+                        <i class="bi bi-check-circle text-success"></i>
+                        <strong>Сотрудник:</strong> {{ current_user.employee.full_name }}
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <!-- Контактная информация -->
+        <div class="card">
+            <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="bi bi-telephone"></i> Контакты поддержки</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-2">
+                    <i class="bi bi-telephone text-primary"></i>
+                    <strong>Техническая поддержка:</strong> +7 (XXX) XXX-XX-XX
+                </p>
+                <p class="mb-2">
+                    <i class="bi bi-envelope text-primary"></i>
+                    <strong>Email:</strong> support@autoservice.ru
+                </p>
+                <p class="mb-0">
+                    <i class="bi bi-clock text-primary"></i>
+                    <strong>Режим работы:</strong> Пн-Пт 9:00-18:00
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Модальное окно для добавления запчасти -->
+<div class="modal fade" id="addPartModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Добавить запчасть на склад</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_part') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Наименование *</label>
+                        <input type="text" class="form-control" name="part_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Артикул</label>
+                        <input type="text" class="form-control" name="part_number">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Производитель</label>
+                        <input type="text" class="form-control" name="manufacturer">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Цена за единицу *</label>
+                            <input type="number" class="form-control" name="unit_price" step="0.01" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Количество</label>
+                            <input type="number" class="form-control" name="quantity_in_stock" value="1" min="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Добавить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

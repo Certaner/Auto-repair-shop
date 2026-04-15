@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Автомобили{% endblock %}
+{% block header %}Список автомобилей{% endblock %}
+
+{% block actions %}
+<a href="{{ url_for('add_car') }}" class="btn btn-success">
+    <i class="bi bi-plus-circle"></i> Добавить автомобиль
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Марка/Модель</th>
+                        <th>Год</th>
+                        <th>Госномер</th>
+                        <th>VIN</th>
+                        <th>Владелец</th>
+                        <th>Телефон</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for car in cars %}
+                    <tr>
+                        <td>{{ car.car_id }}</td>
+                        <td>
+                            <strong>{{ car.brand }}</strong><br>
+                            <small class="text-muted">{{ car.model }}</small>
+                        </td>
+                        <td>{{ car.year or '-' }}</td>
+                        <td><code>{{ car.license_plate }}</code></td>
+                        <td><small>{{ car.vin or '-' }}</small></td>
+                        <td>{{ car.owner.last_name }} {{ car.owner.first_name|first }}.</td>
+                        <td>{{ car.owner.phone }}</td>
+                        <td>
+                            <a href="{{ url_for('client_details', client_id=car.owner.client_id) }}"
+                               class="btn btn-sm btn-outline-info" title="К владельцу">
+                                <i class="bi bi-person"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            Автомобили не найдены. <a href="{{ url_for('add_car') }}">Добавить первый автомобиль</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Мой профиль{% endblock %}
+{% block header %}
+    <i class="bi bi-person-circle"></i> Мой профиль
+{% endblock %}
+
+{% block actions %}
+<a href="{{ url_for('edit_profile') }}" class="btn btn-warning">
+    <i class="bi bi-pencil"></i> Редактировать профиль
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <div class="avatar-container mb-3">
+                    {% if user.avatar %}
+                        <img src="{{ url_for('serve_avatar', filename=user.avatar) }}"
+                             alt="Аватар" class="rounded-circle img-fluid" style="width: 200px; height: 200px; object-fit: cover;">
+                    {% else %}
+                        <i class="bi bi-person-circle" style="font-size: 8rem; color: #6c757d;"></i>
+                    {% endif %}
+                </div>
+                <h4>{{ user.full_name or 'Не указано' }}</h4>
+                <p class="text-muted mb-1">@{{ user.username }}</p>
+                <span class="badge bg-{{ 'success' if user.is_active else 'secondary' }}">
+                    {{ user.get_role_name() }}
+                </span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-info-circle"></i> Системная информация</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th>Дата регистрации:</th>
+                        <td>{{ user.created_at.strftime('%d.%m.%Y') }}</td>
+                    </tr>
+                    <tr>
+                        <th>Последний вход:</th>
+                        <td>
+                            {% if user.last_login %}
+                                {{ user.last_login.strftime('%d.%m.%Y %H:%M') }}
+                            {% else %}
+                                Никогда
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Статус:</th>
+                        <td>
+                            {% if user.is_active %}
+                                <span class="badge bg-success">Активен</span>
+                            {% else %}
+                                <span class="badge bg-danger">Заблокирован</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if user.employee and user.employee_data %}
+                    <tr>
+                        <th>Сотрудник:</th>
+                        <td>
+                            <a href="{{ url_for('employee_details', employee_id=user.employee_id) }}">
+                                {{ user.employee_data.full_name }}
+                            </a>
+                        </td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-person-badge"></i> Личная информация</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6>Email</h6>
+                        <p class="text-muted">{{ user.email }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Телефон</h6>
+                        <p class="text-muted">{{ user.phone or 'Не указан' }}</p>
+                    </div>
+                </div>
+
+                {% if user.bio %}
+                <div class="mb-3">
+                    <h6>О себе</h6>
+                    <p class="text-muted">{{ user.bio }}</p>
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <h6>Роль в системе</h6>
+                    <p class="text-muted">
+                        {{ user.get_role_name() }}
+                        <span class="badge bg-info ms-2">{{ user.role }}</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Блок с активностью (можно расширить) -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Последние действия</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-activity display-6"></i>
+                    <p class="mt-3">История активности будет отображаться здесь</p>
+                    <small>Функция в разработке</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

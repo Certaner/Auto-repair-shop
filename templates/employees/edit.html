@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Редактировать сотрудника {{ employee.full_name }}{% endblock %}
+{% block header %}
+    <i class="bi bi-person-badge-fill text-warning me-2"></i>Редактирование сотрудника: {{ employee.full_name }}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0"><i class="bi bi-person-badge"></i> Редактирование информации</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('edit_employee', employee_id=employee.employee_id) }}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="last_name" class="form-label">Фамилия *</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name"
+                                   value="{{ employee.last_name }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="first_name" class="form-label">Имя *</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name"
+                                   value="{{ employee.first_name }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="position" class="form-label">Должность *</label>
+                            <select class="form-select" id="position" name="position" required>
+                                <option value="мастер-приёмщик" {% if employee.position == 'мастер-приёмщик' %}selected{% endif %}>Мастер-приёмщик</option>
+                                <option value="механик" {% if employee.position == 'механик' %}selected{% endif %}>Механик</option>
+                                <option value="менеджер" {% if employee.position == 'менеджер' %}selected{% endif %}>Менеджер</option>
+                                <option value="кладовщик" {% if employee.position == 'кладовщик' %}selected{% endif %}>Кладовщик</option>
+                                <option value="директор" {% if employee.position == 'директор' %}selected{% endif %}>Директор</option>
+                                <option value="бухгалтер" {% if employee.position == 'бухгалтер' %}selected{% endif %}>Бухгалтер</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Телефон</label>
+                            <input type="tel" class="form-control" id="phone" name="phone"
+                                   value="{{ employee.phone or '' }}" placeholder="+79161234567">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="hire_date" class="form-label">Дата приёма на работу</label>
+                            <input type="date" class="form-control" id="hire_date" name="hire_date"
+                                   value="{{ employee.hire_date.strftime('%Y-%m-%d') if employee.hire_date else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="previous_experience" class="form-label">Предыдущий стаж (лет)</label>
+                            <input type="number" class="form-control" id="previous_experience" name="previous_experience"
+                                   value="{{ employee.previous_experience or 0 }}" min="0" max="50" step="1">
+                            <div class="form-text">Стаж работы до устройства в этот автосервис</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mt-4 pt-2">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                                       {% if employee.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="is_active">
+                                    Активный сотрудник
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mt-4">
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{{ url_for('employee_details', employee_id=employee.employee_id) }}"
+                                   class="btn btn-secondary me-md-2">
+                                    <i class="bi bi-x-circle"></i> Отмена
+                                </a>
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="bi bi-check-lg"></i> Сохранить изменения
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Добавить автомобиль{% endblock %}
+{% block header %}
+    <i class="bi bi-car-front-fill text-success me-2"></i>Добавление нового автомобиля
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-car-front"></i> Данные автомобиля</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('add_car') }}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="client_id" class="form-label">Владелец *</label>
+                            <select class="form-select" id="client_id" name="client_id" required>
+                                <option value="">Выберите клиента</option>
+                                {% for client in clients %}
+                                <option value="{{ client.client_id }}"
+                                        {% if request.args.get('client_id')|int == client.client_id %}selected{% endif %}>
+                                    {{ client.last_name }} {{ client.first_name }} ({{ client.phone }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Добавить владельца</label>
+                            <div>
+                                <a href="{{ url_for('add_client') }}" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-person-plus"></i> Новый клиент
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="brand" class="form-label">Марка *</label>
+                            <input type="text" class="form-control" id="brand" name="brand"
+                                   placeholder="Toyota" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="model" class="form-label">Модель *</label>
+                            <input type="text" class="form-control" id="model" name="model"
+                                   placeholder="Camry" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="year" class="form-label">Год выпуска</label>
+                            <input type="number" class="form-control" id="year" name="year"
+                                   min="1990" max="2025" placeholder="2020">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="license_plate" class="form-label">Госномер *</label>
+                            <input type="text" class="form-control" id="license_plate" name="license_plate"
+                                   placeholder="А123ВС777" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="vin" class="form-label">VIN-код</label>
+                            <input type="text" class="form-control" id="vin" name="vin"
+                                   placeholder="17 символов" maxlength="17">
+                        </div>
+
+                        <div class="col-12 mt-4">
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{{ url_for('cars_list') }}" class="btn btn-secondary me-md-2">
+                                    <i class="bi bi-arrow-left"></i> Назад
+                                </a>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-check-lg"></i> Сохранить автомобиль
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Автозаполнение марки при вводе модели (пример)
+    $('#model').on('input', function() {
+        var model = $(this).val().toLowerCase();
+        if (model.includes('camry') || model.includes('corolla')) {
+            $('#brand').val('Toyota');
+        } else if (model.includes('x5') || model.includes('x3')) {
+            $('#brand').val('BMW');
+        }
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

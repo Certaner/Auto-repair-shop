@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Новый заказ{% endblock %}
+{% block header %}Создание заказ-наряда{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0"><i class="bi bi-clipboard-plus"></i> Основные данные</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('add_order') }}" id="orderForm">
+
+                    <!-- Шаг 1: Выбор автомобиля -->
+                    <div class="mb-4">
+                        <h6 class="border-bottom pb-2">
+                            <i class="bi bi-car-front-fill text-primary me-2"></i>1. Выбор автомобиля
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Клиент</label>
+                                <select class="form-select" id="clientSelect" required>
+                                    <option value="">Выберите клиента</option>
+                                    {% for car in cars %}
+                                    <option value="{{ car.owner.client_id }}">
+                                        {{ car.owner.last_name }} {{ car.owner.first_name }} ({{ car.owner.phone }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="car_id" class="form-label">Автомобиль *</label>
+                                <select class="form-select" id="car_id" name="car_id" required>
+                                    <option value="">Сначала выберите клиента</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Шаг 2: Добавление работ -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">2. Работы по заказу</h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="addWorkBtn">
+                                <i class="bi bi-plus-circle"></i> Добавить работу
+                            </button>
+                        </div>
+
+                        <div id="worksContainer">
+                            <!-- Строки работ будут добавляться здесь динамически -->
+                            <div class="work-row row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <select class="form-select work-select" name="work_ids[]" required>
+                                        <option value="">Выберите работу</option>
+                                        {% for work in works %}
+                                        <option value="{{ work.work_id }}" data-cost="{{ work.base_cost }}">
+                                            {{ work.work_name }} ({{ work.base_cost }} руб.)
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-select employee-select" name="employee_ids[]">
+                                        <option value="">Назначить механика</option>
+                                        {% for employee in employees %}
+                                        <option value="{{ employee.employee_id }}">
+                                            {{ employee.full_name }} ({{ employee.position }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-outline-danger" disabled>
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Шаг 3: Дополнительная информация -->
+                    <div class="mb-4">
+                        <h6 class="border-bottom pb-2">3. Дополнительно</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="reception_date" class="form-label">Дата приёмки *</label>
+                                <input type="date" class="form-control" id="reception_date"
+                                        name="reception_date"
+                                        value="{{ date.today().strftime('%Y-%m-%d') }}"
+                                        required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="notes" class="form-label">Примечания</label>
+                                <textarea class="form-control" id="notes" name="notes"
+                                          rows="2" placeholder="Особые пожелания клиента, замечания..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Итоговая сумма -->
+                    <div class="alert alert-info">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">Итоговая стоимость:</h6>
+                                <h4 class="mb-0" id="totalCost">0.00 руб.</h4>
+                                <input type="hidden" name="total_cost" id="totalCostInput" value="0">
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted d-block">Сумма рассчитывается автоматически</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Кнопки отправки -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{{ url_for('orders_list') }}" class="btn btn-secondary me-md-2">
+                            <i class="bi bi-x-circle"></i> Отмена
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-lg"></i> Создать заказ-наряд
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    var workCounter = 1;
+
+    // Динамическая загрузка автомобилей клиента
+    $('#clientSelect').change(function() {
+        var clientId = $(this).val();
+        if (clientId) {
+            $.getJSON('/api/client/' + clientId + '/cars', function(data) {
+                var carSelect = $('#car_id');
+                carSelect.empty();
+                carSelect.append('<option value="">Выберите автомобиль</option>');
+                $.each(data, function(index, car) {
+                    carSelect.append('<option value="' + car.car_id + '">' +
+                        car.full_name + ' (' + car.license_plate + ')</option>');
+                });
+            });
+        }
+    });
+
+    // Добавление новой строки работы
+    $('#addWorkBtn').click(function() {
+        workCounter++;
+        var newRow = `
+            <div class="work-row row g-3 mb-3" id="work-row-${workCounter}">
+                <div class="col-md-6">
+                    <select class="form-select work-select" name="work_ids[]" required>
+                        <option value="">Выберите работу</option>
+                        {% for work in works %}
+                        <option value="{{ work.work_id }}" data-cost="{{ work.base_cost }}">
+                            {{ work.work_name }} ({{ work.base_cost }} руб.)
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select employee-select" name="employee_ids[]">
+                        <option value="">Назначить механика</option>
+                        {% for employee in employees %}
+                        <option value="{{ employee.employee_id }}">
+                            {{ employee.full_name }} ({{ employee.position }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-danger remove-work-btn"
+                            data-row="${workCounter}">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        $('#worksContainer').append(newRow);
+    });
+
+    // Удаление строки работы
+    $(document).on('click', '.remove-work-btn', function() {
+        var rowId = $(this).data('row');
+        $('#work-row-' + rowId).remove();
+        calculateTotal();
+    });
+
+    // Автоматическая подстановка стоимости при выборе работы
+    $(document).on('change', '.work-select', function() {
+        var selectedOption = $(this).find('option:selected');
+        var baseCost = selectedOption.data('cost') || 0;
+        calculateTotal();
+    });
+
+    // Расчет общей суммы
+    function calculateTotal() {
+        var total = 0;
+        $('.work-select').each(function() {
+            var selectedOption = $(this).find('option:selected');
+            var cost = parseFloat(selectedOption.data('cost')) || 0;
+            total += cost;
+        });
+        $('#totalCost').text(total.toFixed(2) + ' руб.');
+        $('#totalCostInput').val(total);
+    }
+
+    // Инициализация расчета
+    calculateTotal();
+});
+</script>
+{% endblock %}
+{% endblock %}

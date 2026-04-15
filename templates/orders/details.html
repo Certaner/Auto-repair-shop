@@ -1,0 +1,499 @@
+{% extends "base.html" %}
+
+{% block title %}Заказ #{{ order.order_id }}{% endblock %}
+{% block header %}Заказ-наряд #{{ order.order_id }}{% endblock %}
+
+{% block actions %}
+<div class="btn-group">
+    <a href="{{ url_for('orders_list') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> К списку
+    </a>
+    {% if current_user.role in ['admin', 'master'] %}
+    <a href="{{ url_for('order_invoice', order_id=order.order_id) }}" class="btn btn-info">
+        <i class="bi bi-printer"></i> Печать
+    </a>
+    <!-- Кнопка обновления PDF -->
+    <form method="POST" action="{{ url_for('regenerate_invoice', order_id=order.order_id) }}"
+          class="d-inline" onsubmit="return confirm('Перегенерировать PDF отчет?');">
+        <button type="submit" class="btn btn-warning">
+            <i class="bi bi-arrow-clockwise"></i> Обновить PDF
+        </button>
+    </form>
+    <!-- В блоке действий в details.html добавьте: -->
+    <!--{% if current_user.role in ['admin', 'master'] %}
+    <button type="button" class="btn btn-warning"
+            onclick="if(confirm('Восстановить стоимости всех работ в заказе?')) {
+                document.getElementById('recalculateForm').submit();
+            }">
+        <i class="bi bi-currency-exchange"></i> Восстановить стоимости
+    </button>
+
+    <form id="recalculateForm" method="POST"
+          action="{{ url_for('recalculate_work_costs', order_id=order.order_id) }}"
+          style="display: none;">
+    </form>
+    {% endif %}-->
+    {% endif %}
+    <!-- Кнопки быстрого изменения статуса -->
+    {% if current_user.role in ['admin', 'master'] %}
+    <div class="btn-group">
+        <button type="button" class="btn btn-warning dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-pencil"></i> Статус: {{ order.get_status_name() }}
+        </button>
+        <ul class="dropdown-menu">
+            <li><h6 class="dropdown-header">Изменить статус:</h6></li>
+            {% if order.status != 'принят' %}
+            <li><a class="dropdown-item" href="{{ url_for('quick_update_status', order_id=order.order_id, status='принят') }}">
+                <i class="bi bi-clock"></i> Принят
+            </a></li>
+            {% endif %}
+
+            {% if order.status != 'в работе' %}
+            <li><a class="dropdown-item" href="{{ url_for('quick_update_status', order_id=order.order_id, status='в работе') }}">
+                <i class="bi bi-gear"></i> В работе
+            </a></li>
+            {% endif %}
+
+            {% if order.status != 'ожидает запчастей' %}
+            <li><a class="dropdown-item" href="{{ url_for('quick_update_status', order_id=order.order_id, status='ожидает запчастей') }}">
+                <i class="bi bi-box"></i> Ожидает запчастей
+            </a></li>
+            {% endif %}
+
+            {% if order.status != 'завершен' %}
+            <li><a class="dropdown-item" href="{{ url_for('quick_update_status', order_id=order.order_id, status='завершен') }}">
+                <i class="bi bi-check-circle"></i> Завершен
+            </a></li>
+            {% endif %}
+
+            {% if order.status != 'отменен' %}
+            <li><a class="dropdown-item text-danger" href="{{ url_for('quick_update_status', order_id=order.order_id, status='отменен') }}">
+                <i class="bi bi-x-circle"></i> Отменен
+            </a></li>
+            {% endif %}
+
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#statusModal">
+                <i class="bi bi-pencil-square"></i> Другое...
+            </a></li>
+        </ul>
+    </div>
+    {% endif %}
+    <!-- Кнопка удаления -->
+    {% if current_user.role in ['admin', 'master'] and order.status != 'завершен' %}
+    <form method="POST" action="{{ url_for('delete_order', order_id=order.order_id) }}"
+          class="d-inline" onsubmit="return confirm('Вы уверены, что хотите удалить этот заказ?');">
+        <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Удалить
+        </button>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <!-- Основная информация -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Информация о заказе</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th width="40%">Номер:</th>
+                        <td><strong>#{{ order.order_id }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Статус:</th>
+                        <td>
+                            <span class="badge
+                                {% if order.status == 'completed' %}bg-success
+                                {% elif order.status == 'in_progress' %}bg-warning text-dark
+                                {% elif order.status == 'new' %}bg-secondary
+                                {% else %}bg-danger{% endif %}">
+                                {{ order.get_status_name() }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Дата приёмки:</th>
+                        <td>{{ order.reception_date.strftime('%d.%m.%Y') }}</td>
+                    </tr>
+                    {% if order.completion_date %}
+                    <tr>
+                        <th>Дата завершения:</th>
+                        <td>{{ order.completion_date.strftime('%d.%m.%Y') }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <th>Итоговая сумма:</th>
+                        <td><h4 class="text-success mb-0">{{ "%.2f"|format(order.total_cost) }} ₽</h4></td>
+                    </tr>
+                </table>
+
+                {% if order.notes %}
+                <div class="alert alert-light mt-3">
+                    <h6><i class="bi bi-chat-left-text"></i> Примечания:</h6>
+                    <p class="mb-0">{{ order.notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Информация об автомобиле -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-car-front"></i> Автомобиль</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th>Марка/Модель:</th>
+                        <td>{{ order.car.brand }} {{ order.car.model }}</td>
+                    </tr>
+                    <tr>
+                        <th>Госномер:</th>
+                        <td><code>{{ order.car.license_plate }}</code></td>
+                    </tr>
+                    <tr>
+                        <th>Год:</th>
+                        <td>{{ order.car.year or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>VIN:</th>
+                        <td><small>{{ order.car.vin or 'не указан' }}</small></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Информация о клиенте -->
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-person"></i> Клиент</h5>
+            </div>
+            <div class="card-body">
+                <h6>{{ order.car.owner.full_name }}</h6>
+                <p class="mb-1">
+                    <i class="bi bi-telephone"></i> {{ order.car.owner.phone }}
+                </p>
+                {% if order.car.owner.email %}
+                <p class="mb-0">
+                    <i class="bi bi-envelope"></i> {{ order.car.owner.email }}
+                </p>
+                {% endif %}
+                <hr>
+                <a href="{{ url_for('client_details', client_id=order.car.owner.client_id) }}"
+                   class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-person-lines-fill"></i> Карточка клиента
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- В начале таблицы работ добавьте: -->
+    <!--<div class="alert alert-light mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h6 class="mb-1">Статус выполнения работ:</h6>
+                {% set total_works = order.order_items|length %}
+                {% set completed_works = order.order_items|selectattr('work_status', '==', 'завершена')|list|length %}
+                <div class="progress" style="height: 20px; width: 200px;">
+                    <div class="progress-bar bg-success" role="progressbar"
+                         style="width: {{ (completed_works / total_works * 100) if total_works > 0 else 0 }}%">
+                        {{ completed_works }}/{{ total_works }}
+                    </div>
+                </div>
+            </div>
+            <div class="text-end">
+                <small class="text-muted">
+                    {% if completed_works == total_works and total_works > 0 %}
+                    <span class="text-success">
+                        <i class="bi bi-check-circle"></i> Все работы завершены
+                    </span>
+                    {% else %}
+                    Ожидается завершение {{ total_works - completed_works }} работ
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+    </div>-->
+
+    <!-- Работы по заказу -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0"><i class="bi bi-tools"></i> Выполненные работы</h5>
+            </div>
+            <div class="card-body">
+                {% if order.order_items %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Наименование работы</th>
+                                <th>Механик</th>
+                                <th>Статус</th>
+                                <th>Дата выполнения</th>
+                                <th>Стоимость</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.order_items %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>
+                                    <strong>{{ item.work_info.work_name }}</strong><br>
+                                    <small class="text-muted">{{ item.work_info.description|truncate(50) }}</small>
+                                </td>
+                                <td>
+                                    {% if item.assigned_employee %}
+                                    {{ item.assigned_employee.full_name }}<br>
+                                    <small class="text-muted">{{ item.assigned_employee.position }}</small>
+                                    {% else %}
+                                    <span class="text-muted">Не назначен</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge
+                                        {% if item.work_status == 'завершена' %}bg-success
+                                        {% elif item.work_status == 'в работе' %}bg-warning text-dark
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ item.get_status_name() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {{ item.completion_date_display }}
+                                </td>
+                                <td>
+                                    {{ "%.2f"|format(item.actual_cost or item.work_info.base_cost) }} ₽
+                                </td>
+                                <td>
+                                    {% if item.can_be_completed_by(current_user) %}
+                                    <form method="POST" action="{{ url_for('complete_work', order_id=order.order_id, order_comp_id=item.order_comp_id) }}"
+                                          class="d-inline" onsubmit="return confirm('Отметить работу как выполненную?');">
+                                        <button type="submit" class="btn btn-outline-success btn-sm"
+                                                title="Отметить как выполненную">
+                                            <i class="bi bi-check"></i>
+                                        </button>
+                                    </form>
+                                    {% elif item.work_status == 'завершена' %}
+                                    <span class="text-success" title="Работа завершена {{ item.end_time.strftime('%d.%m.%Y %H:%M') }}">
+                                        <i class="bi bi-check-circle"></i>
+                                    </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+
+                            <!-- Использованные запчасти для этой работы -->
+                            {% if item.parts_used %}
+                            <tr class="bg-light">
+                                <td colspan="7">
+                                    <small class="text-muted">Использованные запчасти:</small>
+                                    <ul class="mb-0 ps-3">
+                                        {% for part_usage in item.parts_used %}
+                                        <li>
+                                            {% set part = part_usage.part_info %}
+                                            {{ part.part_name }} –
+                                            {{ part_usage.quantity }} шт. ×
+                                            {{ "%.2f"|format(part_usage.unit_price_at_time) }} ₽ =
+                                            <strong>{{ "%.2f"|format(part_usage.quantity * part_usage.unit_price_at_time) }} ₽</strong>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-secondary">
+                                <td colspan="5" class="text-end"><strong>ИТОГО:</strong></td>
+                                <td colspan="2">
+                                    <h5 class="mb-0 text-success">{{ "%.2f"|format(order.total_cost) }} ₽</h5>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-tools display-6"></i>
+                    <p class="mt-3">В заказе пока нет работ</p>
+                </div>
+                {% endif %}
+
+                <!-- Кнопка добавления запчастей (для механиков и мастеров) -->
+                {% if current_user.role in ['admin', 'master', 'mechanic'] and order.status != 'completed' %}
+                <div class="mt-3 text-end">
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addPartsModal">
+                        <i class="bi bi-plus-circle"></i> Добавить запчасти
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно добавления запчастей -->
+<div class="modal fade" id="addPartsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Добавить запчасти к работе</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_parts_to_order', order_id=order.order_id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Работа:</label>
+                        <select class="form-select" name="order_comp_id" required>
+                            <option value="">Выберите работу</option>
+                            {% for item in order.order_items %}
+                            <option value="{{ item.order_comp_id }}">
+                                {{ item.work_info.work_name }} ({{ item.work_status }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Запчасть:</label>
+                        <select class="form-select" name="part_id" required id="partSelect">
+                            <option value="">Выберите запчасть</option>
+                            {% for part in parts %}
+                            <option value="{{ part.part_id }}"
+                                    data-price="{{ part.unit_price }}"
+                                    data-stock="{{ part.quantity_in_stock }}">
+                                {{ part.part_name }} ({{ part.manufacturer }}) - {{ part.unit_price }} руб. (в наличии: {{ part.quantity_in_stock }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Количество:</label>
+                        <input type="number" class="form-control" name="quantity" value="1" min="1" id="quantityInput" required>
+                        <!--<div class="form-text">
+                            Доступно: <span id="availableStock">0</span> шт.
+                            Стоимость: <span id="partCost">0</span> руб.
+                        </div>-->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Добавить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Заменяем существующий скрипт в details.html на этот: -->
+<!--<script>
+$(document).ready(function() {
+    // Функция для обновления информации о запчасти
+    function updatePartInfo() {
+        var selectedOption = $('#partSelect option:selected');
+        var price = parseFloat(selectedOption.data('price')) || 0;
+        var stock = parseInt(selectedOption.data('stock')) || 0;
+        var quantity = parseInt($('#quantityInput').val()) || 1;
+
+        // Обновляем отображаемую информацию
+        $('#availableStock').text(stock);
+        $('#partCost').text((price * quantity).toFixed(2));
+
+        // Устанавливаем максимальное количество
+        $('#quantityInput').attr('max', stock);
+
+        // Если количество превышает доступное, корректируем
+        if (quantity > stock) {
+            $('#quantityInput').val(stock);
+            $('#partCost').text((price * stock).toFixed(2));
+        }
+    }
+
+    // Инициализируем при загрузке
+    $('#partSelect').trigger('change');
+
+    // Обработчики событий
+    $('#partSelect').change(function() {
+        updatePartInfo();
+    });
+
+    $('#quantityInput').on('input', function() {
+        updatePartInfo();
+    });
+
+    // Обновляем при открытии модального окна
+    $('#addPartsModal').on('show.bs.modal', function() {
+        setTimeout(function() {
+            updatePartInfo();
+        }, 100);
+    });
+});
+</script>-->
+
+<!-- Добавьте после кнопки добавления запчастей: -->
+{% if current_user.role in ['admin', 'master'] %}
+<div class="mt-3">
+    <!-- Проверяем, есть ли незавершенные работы -->
+    {% set has_unfinished_works = order.order_items|selectattr('work_status', '!=', 'завершена')|list|length > 0 %}
+    {% if has_unfinished_works %}
+    <form method="POST" action="{{ url_for('complete_all_works', order_id=order.order_id) }}"
+          class="d-inline" onsubmit="return confirm('Отметить ВСЕ работы как завершенные?');">
+        <button type="submit" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-check-all"></i> Завершить все работы
+        </button>
+    </form>
+    {% else %}
+    <span class="badge bg-success">Все работы завершены</span>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Модальное окно для изменения статуса -->
+{% if current_user.role in ['admin', 'master'] %}
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Изменение статуса заказа #{{ order.order_id }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('update_order_status', order_id=order.order_id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Новый статус:</label>
+                        <select class="form-select" name="new_status" required>
+                            <option value="">Выберите статус...</option>
+                            <option value="принят" {% if order.status =='принят' %}selected{% endif %}>Принят</option>
+                            <option value="в работе" {% if order.status == 'в работе' %}selected{% endif %}>В работе</option>
+                            <option value="ожидает запчастей" {% if order.status == 'ожидает запчастей' %}selected{% endif %}>Ожидает запчастей</option>
+                            <option value="завершен" {% if order.status == 'завершен' %}selected{% endif %}>Завершен</option>
+                            <option value="отменен" {% if order.status == 'отменен' %}selected{% endif %}>Отменен</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Комментарий (необязательно):</label>
+                        <textarea class="form-control" name="comment" rows="3"
+                                  placeholder="Причина изменения статуса, дополнительные указания..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/work.js') }}"></script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Редактирование профиля{% endblock %}
+{% block header %}
+    <i class="bi bi-pencil-square"></i> Редактирование профиля
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-image"></i> Аватар</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="avatar-container mb-3">
+                    {% if user.avatar %}
+                        <img src="{{ url_for('serve_avatar', filename=user.avatar) }}"
+                             alt="Аватар" class="rounded-circle img-fluid mb-3"
+                             style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <i class="bi bi-person-circle mb-3" style="font-size: 8rem; color: #6c757d;"></i>
+                    {% endif %}
+                </div>
+
+                <form method="POST" action="{{ url_for('edit_profile') }}" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="avatar" class="form-label">Выберите новое фото</label>
+                        <input class="form-control" type="file" id="avatar" name="avatar" accept="image/*">
+                        <div class="form-text">
+                            Поддерживаемые форматы: JPG, PNG, GIF. Макс. размер: 5MB.
+                        </div>
+                    </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-key"></i> Смена пароля</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="old_password" class="form-label">Текущий пароль</label>
+                    <input type="password" class="form-control" id="old_password" name="old_password">
+                </div>
+                <div class="mb-3">
+                    <label for="new_password" class="form-label">Новый пароль</label>
+                    <input type="password" class="form-control" id="new_password" name="new_password">
+                </div>
+                <div class="mb-3">
+                    <label for="confirm_password" class="form-label">Подтвердите новый пароль</label>
+                    <input type="password" class="form-control" id="confirm_password" name="confirm_password">
+                </div>
+                <button type="submit" formaction="{{ url_for('change_password') }}"
+                        class="btn btn-danger w-100">
+                    <i class="bi bi-key-fill"></i> Сменить пароль
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-person-lines-fill"></i> Личные данные</h5>
+            </div>
+            <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="full_name" class="form-label">Полное имя</label>
+                            <input type="text" class="form-control" id="full_name" name="full_name"
+                                   value="{{ user.full_name or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="username" class="form-label">Логин</label>
+                            <input type="text" class="form-control" id="username" value="{{ user.username }}" disabled>
+                            <div class="form-text">Логин нельзя изменить</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email"
+                                   value="{{ user.email }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Телефон</label>
+                            <input type="tel" class="form-control" id="phone" name="phone"
+                                   value="{{ user.phone or '' }}">
+                        </div>
+
+                        <div class="col-12">
+                            <label for="bio" class="form-label">О себе</label>
+                            <textarea class="form-control" id="bio" name="bio" rows="4">{{ user.bio or '' }}</textarea>
+                            <div class="form-text">Расскажите немного о себе (необязательно)</div>
+                        </div>
+
+                        <div class="col-12 mt-4">
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{{ url_for('profile') }}" class="btn btn-secondary me-md-2">
+                                    <i class="bi bi-x-circle"></i> Отмена
+                                </a>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-check-lg"></i> Сохранить изменения
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-shield-check"></i> Информация о роли</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th>Роль:</th>
+                        <td>{{ user.get_role_name() }} <span class="badge bg-secondary">{{ user.role }}</span></td>
+                    </tr>
+                    <tr>
+                        <th>Статус:</th>
+                        <td>
+                            {% if user.is_active %}
+                                <span class="badge bg-success">Активная учетная запись</span>
+                            {% else %}
+                                <span class="badge bg-danger">Учетная запись деактивирована</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Дата регистрации:</th>
+                        <td>{{ user.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                    </tr>
+                </table>
+                <div class="alert alert-warning">
+                    <small>
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Для изменения роли или статуса учетной записи обратитесь к администратору системы.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Предпросмотр загружаемого изображения
+document.getElementById('avatar').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // Находим или создаем элемент для предпросмотра
+            let preview = document.querySelector('.avatar-container img');
+            if (!preview) {
+                preview = document.createElement('img');
+                preview.className = 'rounded-circle img-fluid mb-3';
+                preview.style.width = '150px';
+                preview.style.height = '150px';
+                preview.style.objectFit = 'cover';
+                document.querySelector('.avatar-container').innerHTML = '';
+                document.querySelector('.avatar-container').appendChild(preview);
+            }
+            preview.src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+{% endblock %}

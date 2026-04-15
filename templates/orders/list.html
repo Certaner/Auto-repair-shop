@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Заказы{% endblock %}
+{% block header %}Список заказ-нарядов{% endblock %}
+
+{% block actions %}
+<a href="{{ url_for('add_order') }}" class="btn btn-success">
+    <i class="bi bi-clipboard-plus"></i> Новый заказ
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- В начале контента после заголовка добавьте: -->
+{% if current_user.role == 'mechanic' %}
+<div class="alert alert-info mb-4">
+    <i class="bi bi-info-circle"></i>
+    Вы видите только те заказы, в которых у вас есть назначенные работы.
+    Всего доступно заказов: {{ orders|length }}
+</div>
+{% endif %}
+<div class="card">
+    <div class="card-body">
+        <!-- Фильтры -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <select class="form-select form-select-sm" id="statusFilter">
+                    <option value="">Все статусы</option>
+                    <option value="принят">Принят</option>
+                    <option value="в работе">В работе</option>
+                    <option value="завершен">Завершен</option>
+                    <option value="отменен">Отменен</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="date" class="form-control form-control-sm" id="dateFilter"
+                       placeholder="Дата с...">
+            </div>
+        </div>
+
+        <!-- Таблица заказов -->
+        <div class="table-responsive">
+            <table class="table table-hover" id="ordersTable">
+                <thead>
+                    <tr>
+                        <th>№ заказа</th>
+                        <th>Клиент</th>
+                        <th>Автомобиль</th>
+                        <th>Дата приёмки</th>
+                        <th>Статус</th>
+                        <th>Сумма</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr data-status="{{ order.status }}"
+                        data-date="{{ order.reception_date.strftime('%Y-%m-%d') }}">
+                        <td><strong>#{{ order.order_id }}</strong></td>
+                        <td>
+                            {{ order.car.owner.last_name }} {{ order.car.owner.first_name|first }}.<br>
+                            <small class="text-muted">{{ order.car.owner.phone }}</small>
+                        </td>
+                        <td>
+                            {{ order.car.brand }} {{ order.car.model }}<br>
+                            <small class="text-muted">{{ order.car.license_plate }}</small>
+                        </td>
+                        <td>{{ order.reception_date.strftime('%d.%m.%Y') }}</td>
+                        <td>
+                            <span class="badge
+                                {% if order.status == 'завершен' %}bg-success
+                                {% elif order.status == 'в работе' %}bg-warning text-dark
+                                {% elif order.status == 'принят' %}bg-secondary
+                                {% else %}bg-danger{% endif %}">
+                                {{ order.get_status_name() }}
+                            </span>
+                        </td>
+                        <td>
+                            <strong>{{ "%.2f"|format(order.total_cost) }} ₽</strong>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('order_details', order_id=order.order_id) }}"
+                                   class="btn btn-outline-primary" title="Просмотр">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if current_user.role in ['admin', 'master'] %}
+                                <a href="{{ url_for('order_invoice', order_id=order.order_id) }}"
+                                   class="btn btn-outline-info" title="Печать">
+                                    <i class="bi bi-printer"></i>
+                                </a>
+                                <!-- Кнопка удаления -->
+                                {% if order.status != 'завершен' %}
+                                <form method="POST" action="{{ url_for('delete_order', order_id=order.order_id) }}"
+                                      class="d-inline" onsubmit="return confirmDelete(this);">
+                                    <button type="submit" class="btn btn-outline-danger" title="Удалить">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            Заказы не найдены. <a href="{{ url_for('add_order') }}">Создать первый заказ</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Фильтрация по статусу
+    $('#statusFilter').change(function() {
+        var status = $(this).val();
+        if (status) {
+            $('#ordersTable tbody tr').hide();
+            $('#ordersTable tbody tr[data-status="' + status + '"]').show();
+        } else {
+            $('#ordersTable tbody tr').show();
+        }
+    });
+
+    // Фильтрация по дате
+    $('#dateFilter').change(function() {
+        var selectedDate = $(this).val();
+        if (selectedDate) {
+            $('#ordersTable tbody tr').hide();
+            $('#ordersTable tbody tr[data-date="' + selectedDate + '"]').show();
+        }
+    });
+
+    // Сброс фильтров
+    $('#resetFilters').click(function() {
+        $('#statusFilter').val('');
+        $('#dateFilter').val('');
+        $('#ordersTable tbody tr').show();
+    });
+});
+
+// Функция подтверждения удаления
+function confirmDelete(form) {
+    if (confirm('Вы уверены, что хотите удалить этот заказ?\nЭто действие нельзя отменить.')) {
+        // Добавляем индикатор загрузки
+        form.querySelector('button').innerHTML = '<i class="bi bi-hourglass-split"></i>';
+        form.querySelector('button').disabled = true;
+        return true;
+    }
+    return false;
+}
+</script>
+{% endblock %}
+{% endblock %}
