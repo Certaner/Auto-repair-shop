@@ -3,54 +3,54 @@
 
 # Файловая структура 
 app.py – главный файл Flask-приложения  
-config.py – конфигурация приложения
-requirements.txt – указание зависимостей python
-database/ – папка для работы с базой данных
-  models.py – модели SQLAlchemy
-  session.py – управление сессиями
-  db_init.py – инициализация БД
-templates/ – папка с html-шаблонами
-  base.html – базовый шаблон
-  admin/users.html - административная панель
-  profile/ - профиль пользователя
-    view.html - личная страница профиля
-    edit.html - редактирование профиля
-	auth/ – аутентификация
-	  login.html – страница входа
-	dashboard/ – панель управления
-	  index.html – главная страница дашборда
-	clients/  – клиенты
-	  list.html  – список клиентов
-	  add.html  – добавление клиента
-	  details.html – доп. информация
-    edit.html - редактирование информации
-	cars/ – автомобили
-	  list.html – список автомобилей
-	  add.html – добавление автомобиля
-	employees/ – сотрудники
-		list.html – список сотрудников
-    add.html - добавление сотрудника
-    edit.html - редактирование информации о сотруднике
-    details.html - информация о сотруднике
-	orders/ – заказы
-		list.html – список заказов
-		add.html – добавление заказа
-		details.html – детали заказа
-		invoice.html – печать заказа
-	warehouse/ – склад
-		parts_list.html – список запчастей
-    edit_part.html - редактирование информации
-	reports/  – отчеты
-		orders_report.html  – финансовые отчеты
-	404.html - страница 404
-static/ – папка со статическими файлами
-  css/ – стили
-	js/ – JavaScript
-	invoices/ – генерируемые PDF (заполняется автоматически)
-  uploads/avatars - хранение изображений профилей (аватарок)
-utils/ – папка со вспомогательными функциями
-	pdf_generator.py – генерация PDF-документов
-fonts/ – папка со шрифтами
+config.py – конфигурация приложения  
+requirements.txt – указание зависимостей python  
+database/ – папка для работы с базой данных  
+  models.py – модели SQLAlchemy  
+  session.py – управление сессиями  
+  db_init.py – инициализация БД  
+templates/ – папка с html-шаблонами  
+  base.html – базовый шаблон  
+  admin/users.html - административная панель  
+  profile/ - профиль пользователя  
+    view.html - личная страница профиля  
+    edit.html - редактирование профиля  
+	auth/ – аутентификация  
+	  login.html – страница входа  
+	dashboard/ – панель управления  
+	  index.html – главная страница дашборда  
+	clients/  – клиенты  
+	  list.html  – список клиентов  
+	  add.html  – добавление клиента  
+	  details.html – доп. информация  
+    edit.html - редактирование информации  
+	cars/ – автомобили  
+	  list.html – список автомобилей  
+	  add.html – добавление автомобиля  
+	employees/ – сотрудники  
+		list.html – список сотрудников  
+    add.html - добавление сотрудника  
+    edit.html - редактирование информации о сотруднике  
+    details.html - информация о сотруднике  
+	orders/ – заказы  
+		list.html – список заказов  
+		add.html – добавление заказа  
+		details.html – детали заказа  
+		invoice.html – печать заказа  
+	warehouse/ – склад  
+		parts_list.html – список запчастей  
+    edit_part.html - редактирование информации  
+	reports/  – отчеты  
+		orders_report.html  – финансовые отчеты  
+	404.html - страница 404  
+static/ – папка со статическими файлами  
+  css/ – стили  
+	js/ – JavaScript  
+	invoices/ – генерируемые PDF (заполняется автоматически)  
+  uploads/avatars - хранение изображений профилей (аватарок)  
+utils/ – папка со вспомогательными функциями  
+	pdf_generator.py – генерация PDF-документов  
+fonts/ – папка со шрифтами  
 
 # Структура БД
 -- Таблица клиентов:
