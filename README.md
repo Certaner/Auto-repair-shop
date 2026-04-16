@@ -6,9 +6,9 @@ app.py – главный файл Flask-приложения
 config.py – конфигурация приложения  
 requirements.txt – указание зависимостей python  
 database/ – папка для работы с базой данных  
-  models.py – модели SQLAlchemy  
-  session.py – управление сессиями  
-  db_init.py – инициализация БД  
+&emsp;models.py – модели SQLAlchemy  
+&emsp;session.py – управление сессиями  
+&emsp;db_init.py – инициализация БД  
 templates/ – папка с html-шаблонами  
   base.html – базовый шаблон  
   admin/users.html - административная панель  
