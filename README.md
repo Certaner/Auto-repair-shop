@@ -54,6 +54,7 @@ fonts/ – папка со шрифтами
 
 # Структура БД
 -- Таблица клиентов:
+```
 CREATE TABLE client (
     client_id SERIAL PRIMARY KEY,
     last_name VARCHAR(50) NOT NULL,
@@ -62,7 +63,9 @@ CREATE TABLE client (
     email VARCHAR(100),
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+```
 -- Таблица автомобилей:
+```
 CREATE TABLE car (
     car_id SERIAL PRIMARY KEY,
     client_id INTEGER NOT NULL,
@@ -73,7 +76,9 @@ CREATE TABLE car (
     vin VARCHAR(17) UNIQUE,
     FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE CASCADE
 );
--- Таблица заказ-нарядов
+```
+-- Таблица заказ-нарядов:
+```
 CREATE TABLE service_order (
     order_id SERIAL PRIMARY KEY,
     car_id INTEGER NOT NULL,
@@ -84,7 +89,9 @@ CREATE TABLE service_order (
     notes TEXT,
     FOREIGN KEY (car_id) REFERENCES car(car_id) ON DELETE CASCADE
 );
--- Таблица видов работ
+```
+-- Таблица видов работ:
+```
 CREATE TABLE service_work (
     work_id SERIAL PRIMARY KEY,
     work_name VARCHAR(100) NOT NULL UNIQUE,
@@ -92,7 +99,9 @@ CREATE TABLE service_work (
     standard_hours DECIMAL(5, 2),
     base_cost DECIMAL(10, 2) NOT NULL
 );
--- Таблица сотрудников
+```
+-- Таблица сотрудников:
+```
 CREATE TABLE employee (
     employee_id SERIAL PRIMARY KEY,
     last_name VARCHAR(50) NOT NULL,
@@ -102,7 +111,9 @@ CREATE TABLE employee (
     hire_date DATE DEFAULT CURRENT_DATE,
     is_active BOOLEAN DEFAULT TRUE
 );
--- Таблица складских деталей
+```
+-- Таблица складских деталей:
+```
 CREATE TABLE spare_part (
     part_id SERIAL PRIMARY KEY,
     part_name VARCHAR(100) NOT NULL,
@@ -113,7 +124,9 @@ CREATE TABLE spare_part (
     min_quantity INTEGER DEFAULT 5,
     location VARCHAR(50)
 );
--- Таблица состава заказа
+```
+-- Таблица состава заказа:
+```
 CREATE TABLE order_composition (
     order_comp_id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL,
@@ -128,7 +141,9 @@ CREATE TABLE order_composition (
     FOREIGN KEY (work_id) REFERENCES service_work(work_id),
     FOREIGN KEY (employee_id) REFERENCES employee(employee_id)
 );
--- Таблица использования запчастей
+```
+-- Таблица использования запчастей:
+```
 CREATE TABLE parts_usage (
     usage_id SERIAL PRIMARY KEY,
     order_comp_id INTEGER NOT NULL,
@@ -138,7 +153,9 @@ CREATE TABLE parts_usage (
     FOREIGN KEY (order_comp_id) REFERENCES order_composition(order_comp_id) ON DELETE CASCADE,
     FOREIGN KEY (part_id) REFERENCES spare_part(part_id)
 );
--- Таблица назначения работ
+```
+-- Таблица назначения работ:
+```
 CREATE TABLE work_assignment (
     assignment_id SERIAL PRIMARY KEY,
     employee_id INTEGER NOT NULL,
@@ -148,3 +165,4 @@ CREATE TABLE work_assignment (
     FOREIGN KEY (work_id) REFERENCES service_work(work_id) ON DELETE CASCADE,
     UNIQUE(employee_id, work_id)
 );
+```
