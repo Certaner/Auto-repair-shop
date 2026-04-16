@@ -10,46 +10,46 @@ database/ – папка для работы с базой данных
 &emsp;session.py – управление сессиями  
 &emsp;db_init.py – инициализация БД  
 templates/ – папка с html-шаблонами  
-  base.html – базовый шаблон  
-  admin/users.html - административная панель  
-  profile/ - профиль пользователя  
-    view.html - личная страница профиля  
-    edit.html - редактирование профиля  
-	auth/ – аутентификация  
-	  login.html – страница входа  
-	dashboard/ – панель управления  
-	  index.html – главная страница дашборда  
-	clients/  – клиенты  
-	  list.html  – список клиентов  
-	  add.html  – добавление клиента  
-	  details.html – доп. информация  
-    edit.html - редактирование информации  
-	cars/ – автомобили  
-	  list.html – список автомобилей  
-	  add.html – добавление автомобиля  
-	employees/ – сотрудники  
-		list.html – список сотрудников  
-    add.html - добавление сотрудника  
-    edit.html - редактирование информации о сотруднике  
-    details.html - информация о сотруднике  
-	orders/ – заказы  
-		list.html – список заказов  
-		add.html – добавление заказа  
-		details.html – детали заказа  
-		invoice.html – печать заказа  
-	warehouse/ – склад  
-		parts_list.html – список запчастей  
-    edit_part.html - редактирование информации  
-	reports/  – отчеты  
-		orders_report.html  – финансовые отчеты  
-	404.html - страница 404  
+&emsp;base.html – базовый шаблон  
+&emsp;admin/users.html - административная панель  
+&emsp;profile/ - профиль пользователя  
+&emsp;&emsp;view.html - личная страница профиля  
+&emsp;&emsp;edit.html - редактирование профиля  
+&emsp;auth/ – аутентификация  
+&emsp;&emsp;login.html – страница входа  
+&emsp;dashboard/ – панель управления  
+&emsp;&emsp;index.html – главная страница дашборда  
+&emsp;clients/  – клиенты  
+&emsp;&emsp;list.html  – список клиентов  
+&emsp;&emsp;add.html  – добавление клиента  
+&emsp;&emsp;details.html – доп. информация  
+&emsp;&emsp;edit.html - редактирование информации  
+&emsp;cars/ – автомобили  
+&emsp;&emsp;list.html – список автомобилей  
+&emsp;&emsp;add.html – добавление автомобиля  
+&emsp;employees/ – сотрудники  
+&emsp;&emsp;list.html – список сотрудников  
+&emsp;&emsp;add.html - добавление сотрудника  
+&emsp;&emsp;edit.html - редактирование информации о сотруднике  
+&emsp;&emsp;details.html - информация о сотруднике  
+&emsp;orders/ – заказы  
+&emsp;&emsp;list.html – список заказов  
+&emsp;&emsp;add.html – добавление заказа  
+&emsp;&emsp;details.html – детали заказа  
+&emsp;&emsp;invoice.html – печать заказа  
+&emsp;warehouse/ – склад  
+&emsp;&emsp;parts_list.html – список запчастей  
+&emsp;&emsp;edit_part.html - редактирование информации  
+&emsp;reports/  – отчеты  
+&emsp;&emsp;orders_report.html  – финансовые отчеты  
+&emsp;404.html - страница 404  
 static/ – папка со статическими файлами  
-  css/ – стили  
-	js/ – JavaScript  
-	invoices/ – генерируемые PDF (заполняется автоматически)  
-  uploads/avatars - хранение изображений профилей (аватарок)  
+&emsp;css/ – стили  
+&emsp;js/ – JavaScript  
+&emsp;invoices/ – генерируемые PDF (заполняется автоматически)  
+&emsp;uploads/avatars - хранение изображений профилей (аватарок)  
 utils/ – папка со вспомогательными функциями  
-	pdf_generator.py – генерация PDF-документов  
+&emsp;pdf_generator.py – генерация PDF-документов  
 fonts/ – папка со шрифтами  
 
 # Структура БД
